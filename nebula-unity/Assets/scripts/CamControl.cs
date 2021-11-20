@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class CamControl : MonoBehaviour {
 
+    bool debugLogs = false;
+
     public float freeCameraSpeed = 1f;
     public float lerpSpeed = 0.1f;
     public float minSnapDistance = 0.025f;
@@ -45,6 +47,16 @@ public class CamControl : MonoBehaviour {
         cameraState = CameraState.Idle;
     }
 
+    void Update(){
+        //rotate cam by 90 degrees around player
+        if (Input.GetKeyDown(KeyCode.Q)) {
+            transform.RotateAround(GameObject.Find("Player").transform.position, Vector3.up, 90f);
+        }
+        if (Input.GetKeyDown(KeyCode.E)) {
+            transform.RotateAround(GameObject.Find("Player").transform.position, Vector3.down, 90f);
+        }
+    }
+
     void FixedUpdate() {
         switch (cameraState) {
             // Move towards target vector
@@ -74,24 +86,7 @@ public class CamControl : MonoBehaviour {
                     }
                 }
                 break;
-            // Free target the camera
             case CameraState.Idle:
-                if (Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.LeftArrow)) {
-                    //transform.position = new Vector3(transform.position.x - (freeCameraSpeed * Time.deltaTime), transform.position.y, transform.position.z + (freeCameraSpeed * Time.deltaTime));
-                    transform.RotateAround(Vector3.zero, Vector3.up, 5*freeCameraSpeed*Time.deltaTime);
-                }
-                if (Input.GetKey(KeyCode.R) || Input.GetKey(KeyCode.RightArrow)) {
-                    //transform.position = new Vector3(transform.position.x + (freeCameraSpeed * Time.deltaTime), transform.position.y, transform.position.z - (freeCameraSpeed * Time.deltaTime));
-                    transform.RotateAround(Vector3.zero, Vector3.down, 5*freeCameraSpeed*Time.deltaTime);
-                }
-                /*
-                if (Input.GetKey(KeyCode.UpArrow)) {
-                    transform.position = new Vector3(transform.position.x + (freeCameraSpeed * Time.deltaTime), transform.position.y, transform.position.z + (freeCameraSpeed * Time.deltaTime));
-                }
-                if (Input.GetKey(KeyCode.DownArrow)) {
-                    transform.position = new Vector3(transform.position.x - (freeCameraSpeed * Time.deltaTime), transform.position.y, transform.position.z - (freeCameraSpeed * Time.deltaTime));
-                }
-                */
                 break;
             default:
                 Debug.LogError("Invalid CameraState");
