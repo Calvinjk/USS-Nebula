@@ -8,7 +8,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 
 	// Generation variables to mess with
 	[Tooltip("Toggles debug logs for map generation")]
-	public bool generationDebugLogs = true;
+	public bool generationDebugLogs = false;
 
 	[Header("Generation Variables")]
 	[Tooltip("Smallest dimension a room can have.  Includes walls")]
