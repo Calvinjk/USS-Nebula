@@ -324,7 +324,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 	}
 
 	// All of the functions below are currently placeholders.  These are where we will put the logic to actually place sprites
-	// and models when we have them.  For now they are just differently-colored squared
+	// and models when we have them.  For now they are just differently-colored squares
 
 	void SetWall(Tile tile){
 		tile.curTileState = Tile.TileState.Wall;
