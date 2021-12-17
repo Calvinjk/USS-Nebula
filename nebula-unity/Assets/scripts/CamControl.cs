@@ -9,6 +9,7 @@ public class CamControl : MonoBehaviour {
     public float freeCameraSpeed = 1f;
     public float lerpSpeed = 0.1f;
     public float minSnapDistance = 0.025f;
+    public float currRot = 0f;
 
     public bool ________________;
 
@@ -48,13 +49,7 @@ public class CamControl : MonoBehaviour {
     }
 
     void Update(){
-        //rotate cam by 90 degrees around player
-        if (Input.GetKeyDown(KeyCode.Q)) {
-            transform.RotateAround(GameObject.Find("Player").transform.position, Vector3.up, 90f);
-        }
-        if (Input.GetKeyDown(KeyCode.E)) {
-            transform.RotateAround(GameObject.Find("Player").transform.position, Vector3.down, 90f);
-        }
+        RotationCheck();
     }
 
     void FixedUpdate() {
@@ -91,6 +86,18 @@ public class CamControl : MonoBehaviour {
             default:
                 Debug.LogError("Invalid CameraState");
                 break;
+        }
+    }
+
+    void RotationCheck(){
+        //rotate cam by 90 degrees around camera target
+        if (Input.GetKeyDown(KeyCode.Q)) {
+            transform.RotateAround(GameObject.Find("CameraTarget").transform.position, Vector3.up, 90f);
+            currRot += 90f;
+        }
+        if (Input.GetKeyDown(KeyCode.E)) {
+            transform.RotateAround(GameObject.Find("CameraTarget").transform.position, Vector3.down, 90f);
+            currRot -= 90f;
         }
     }
 }
