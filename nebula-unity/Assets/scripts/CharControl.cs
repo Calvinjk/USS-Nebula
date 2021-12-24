@@ -36,7 +36,8 @@ public class CharControl : MonoBehaviour {
         Vector3 rightMovement = right * moveSpeed * Time.deltaTime * Input.GetAxis("Horizontal Key"); // Our right movement is based on the right vector, movement speed, and our GetAxis command. We multiply by Time.deltaTime to make the movement smooth.
         Vector3 forwardMovement = forward * moveSpeed * Time.deltaTime * Input.GetAxis("Vertical Key"); // Up movement uses the forward vector, movement speed, and the vertical axis 
         Vector3 heading = Vector3.Normalize(rightMovement + forwardMovement); // This creates our new direction. By combining our right and forward movements and normalizing them, we create a new vector that points in the appropriate direction with a length no greater than 1.0
-        transform.forward = heading; // Sets forward direction of our game object to whatever direction we're moving in
+        if (heading != Vector3.zero)
+            transform.forward = heading; // Sets forward direction of our game object to whatever direction we're moving in
         
         //rotate the direction of movement depending on camera current rotation
         transform.position += Quaternion.Euler(0, currRot, 0) * rightMovement; // move our transform's position right/left

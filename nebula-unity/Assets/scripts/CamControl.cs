@@ -91,12 +91,19 @@ public class CamControl : MonoBehaviour {
 
     void RotationCheck(){
         //rotate cam by 90 degrees around camera target
+        RaycastHit HitInfo;
+
+        if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out HitInfo))
+        {   
+            if (debugLogs) 
+                Debug.Log(HitInfo.point);
+        }
         if (Input.GetKeyDown(KeyCode.Q)) {
-            transform.RotateAround(GameObject.Find("CameraTarget").transform.position, Vector3.up, 90f);
+            transform.RotateAround(HitInfo.point, Vector3.up, 90f);
             currRot += 90f;
         }
         if (Input.GetKeyDown(KeyCode.E)) {
-            transform.RotateAround(GameObject.Find("CameraTarget").transform.position, Vector3.down, 90f);
+            transform.RotateAround(HitInfo.point, Vector3.down, 90f);
             currRot -= 90f;
         }
     }
