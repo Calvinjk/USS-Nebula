@@ -1,6 +1,11 @@
 fileFormatVersion: 2
+<<<<<<< HEAD:nebula-unity/Assets/Prefabs/GameManager.prefab.meta
 guid: e39c77dbec04f08488923d6a5081753b
 PrefabImporter:
+=======
+guid: 9fc0d4010bbf28b4594072e72b8655ab
+DefaultImporter:
+>>>>>>> 1fe821fa0feff1535012bd7d4b44a0804b4a7192:nebula-unity/Assets/Scenes/SampleScene.unity.meta
   externalObjects: {}
   userData: 
   assetBundleName: 

@@ -4,6 +4,7 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
+<<<<<<< HEAD
   m_Scenes:
   - enabled: 1
     path: Assets/Scenes/TitleScreen.unity
@@ -11,4 +12,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Testing Scenes/lmao.unity
     guid: 59dd5b9084622f44f9996e36caad7882
+=======
+  m_Scenes: []
+>>>>>>> 1fe821fa0feff1535012bd7d4b44a0804b4a7192
   m_configObjects: {}
