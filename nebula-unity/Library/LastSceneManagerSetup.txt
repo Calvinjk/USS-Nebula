@@ -1,9 +1,0 @@
-sceneSetups:
-<<<<<<< HEAD
-- path: Assets/Scenes/Testing Scenes/generator-test.unity
-=======
-- path: Assets/Scenes/SampleScene.unity
->>>>>>> 1fe821fa0feff1535012bd7d4b44a0804b4a7192
-  isLoaded: 1
-  isActive: 1
-  isSubScene: 0
