@@ -31,6 +31,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 	List<Tile> potentialDoorTiles;
 
 	Tile[,] tiles;
+    GameObject map;
 
 	//.N.E.
 	//..O..
@@ -44,6 +45,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 
 	void Awake() {
 		potentialDoorTiles = new List<Tile>();
+        map = null;
 	}
 
 	void ResetGenerationVariables() {
@@ -61,33 +63,12 @@ public class DungeonMapGenerator : MonoBehaviour {
 		mapYSize = ySize;
 
 		// Create an empty parent object for the map
-		GameObject map = new GameObject("Map");	
+		map = new GameObject("Map");	
 		map.transform.position = new Vector3(0f, 0f, 0f);
 		Map mapScript = map.AddComponent<Map>();
 		mapScript.SetMapSize(xSize, ySize);
 
 		tiles = new Tile[xSize, ySize];
-
-		for (int i = 0; i < xSize; ++i) {
-			for (int j = 0; j < ySize; ++j) {
-
-				// Create a tile and give it a name based on its location
-				GameObject curTileObject = Instantiate(floorTile, new Vector3(i, 0, j), Quaternion.identity) as GameObject;
-				curTileObject.name = "(" + i + ", " + j + ")";
-
-				// When instantiating a Tile, attach a Tile script to it and set variables
-				Tile tileScript = curTileObject.AddComponent<Tile>();
-				tileScript.location = new Vector2Int (i, j);
-				SetUngenerated(tileScript);
-
-				// Add the generated tile to the tiles array and set the object's parent to the map GameObject
-				tiles[i, j] = tileScript;
-				curTileObject.transform.SetParent(map.transform);
-			}
-		} 
-
-		// Now that all the tiles are created, assign them
-		mapScript.tileMap = tiles;
 
 		// Create the initial room in the center (ish)
 		int xLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
@@ -125,8 +106,11 @@ public class DungeonMapGenerator : MonoBehaviour {
 				GenerateRoom(curTile.location.x, curTile.location.y, xLength, yLength, direction);
 			}
 		}
-			
-		return mapScript;
+
+        // Now that all the tiles are created, assign them
+        mapScript.tileMap = tiles;
+
+        return mapScript;
 	}
 
 	// xLocation, yLocation: 	Coordinates to a door of this room.
@@ -152,40 +136,52 @@ public class DungeonMapGenerator : MonoBehaviour {
 						curTile = tiles [xLocation, yLocation];
 
 						// The previous state of the tile should be a wall, but now its a door!
-						if (curTile.curTileState == Tile.TileState.Wall) {
-							SetDoor (curTile);
+						if (curTile != null && curTile.curTileState == Tile.TileState.Wall) {
+							SetDoor(curTile);
 						} else {
 							// This should be the first room.
 							if (generationDebugLogs){
 								Debug.Log ("Creating first room starting point");
 							}
-							SetWall (curTile);
+
+                            // Create a new tile and set it to a wall
+							SetWall(CreateTile(xLocation, yLocation));
 						}
 					} else {
+                        Vector2Int loc = new Vector2Int(0,0);
 						switch (direction) {
 						case Direction.North:
-							curTile = tiles [xLocation + i, yLocation + j];
+                            loc.x = xLocation + i;
+                            loc.y = yLocation + j;
 							break;
 						case Direction.South:
-							curTile = tiles [xLocation + i, yLocation - j];
+                            loc.x = xLocation + i;
+                            loc.y = yLocation - j;
 							break;
 						case Direction.East:
-							curTile = tiles [xLocation + j, yLocation + i];
+                            loc.x = xLocation + j;
+                            loc.y = yLocation + i;
 							break;
 						case Direction.West:
-							curTile = tiles [xLocation - j, yLocation + i];
-							break;
+                            loc.x = xLocation - j;
+                            loc.y = yLocation + i;
+                            break;
+                        default:
+                            if (generationDebugLogs) {
+                                Debug.LogError("Invalid room direction.");
+                            }
+                            break;
 						}
 
 						if (Mathf.Abs (i) == xLength || j == 0 || j == (yLength - 1)) {
-							SetWall (curTile);
+							SetWall(CreateTile(loc.x, loc.y));
 
 							// If this wall tile is NOT a corner, add it to potential list of new doors
 							if (!IsCorner(i, j, xLength, yLength)){
-								potentialDoorTiles.Add (curTile);
+								potentialDoorTiles.Add (tiles[loc.x, loc.y]);
 							}
 						} else {
-							SetFloor (curTile);
+							SetFloor(CreateTile(loc.x, loc.y));
 						}
 					}
 				}
@@ -204,7 +200,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 
 		1: 		Iterate through each tile that would be involved in the room we are making, walls included.
 		2:		If our current tile is off the map, return false.
-		3: 		If even one tile that we check is NOT a ungenerated tile, return false as it overlaps with an existing room
+		3: 		If even one tile that we check is a generated tile, return false as it overlaps with an existing room
 		3.1: 	If we find an existing wall tile in a place we WOULD put a wall tile, allow it as we are ok with "shared" walls
 		3.2:	If we find an existing wall tile in a place we WOULD NOT put a wall, return false
 		4: 		If the loop makes it all the way through without returning false it has checked every tile!
@@ -217,7 +213,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 				case Direction.North:
 					// Check if this tile is on the map
 					if (IsInMapBoundaries(xLocation + i, yLocation + j)) {
-						curTile = tiles [xLocation + i, yLocation + j];
+						curTile = tiles[xLocation + i, yLocation + j];
 					} else {
 						// This room goes past the edge of the map!
 						if (generationDebugLogs) {
@@ -260,7 +256,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 				}
 
 				// Check if this tile is ungenerated
-				if (curTile.curTileState != Tile.TileState.Ungenerated) {
+				if (curTile != null && curTile.curTileState != Tile.TileState.Ungenerated) {
 					// If this tile as already been generated, check if it is a wall
 					if (curTile.curTileState != Tile.TileState.Wall) {
 
@@ -294,17 +290,21 @@ public class DungeonMapGenerator : MonoBehaviour {
 	// Therefore, the first one we find is the only valid one
 	Direction GetRoomDirection(Tile door){
 		if (IsInMapBoundaries(door.location.x, door.location.y + 1) &&
-		    tiles [door.location.x, door.location.y + 1].curTileState == Tile.TileState.Ungenerated) {
-			return Direction.North;
+            (tiles [door.location.x, door.location.y + 1] == null ||
+		    tiles [door.location.x, door.location.y + 1].curTileState == Tile.TileState.Ungenerated)) {
+			   return Direction.North;
 		} else if (IsInMapBoundaries(door.location.x, door.location.y - 1) &&
-		           tiles [door.location.x, door.location.y - 1].curTileState == Tile.TileState.Ungenerated) { 
-			return Direction.South;
+            (tiles [door.location.x, door.location.y - 1] == null ||
+            tiles [door.location.x, door.location.y - 1].curTileState == Tile.TileState.Ungenerated)) { 
+			   return Direction.South;
 		} else if (IsInMapBoundaries(door.location.x + 1, door.location.y) &&
-		           tiles [door.location.x + 1, door.location.y].curTileState == Tile.TileState.Ungenerated) {
-			return Direction.East;
+            (tiles [door.location.x + 1, door.location.y] == null ||
+            tiles [door.location.x + 1, door.location.y].curTileState == Tile.TileState.Ungenerated)) {
+			    return Direction.East;
 		} else if (IsInMapBoundaries(door.location.x - 1, door.location.y) &&
-		           tiles [door.location.x - 1, door.location.y].curTileState == Tile.TileState.Ungenerated) {
-			return Direction.West;
+            (tiles [door.location.x - 1, door.location.y] == null ||
+            tiles [door.location.x - 1, door.location.y].curTileState == Tile.TileState.Ungenerated)) {
+			    return Direction.West;
 		}
 		if (generationDebugLogs) {
 			Debug.Log("No valid direction to place room");
@@ -343,8 +343,18 @@ public class DungeonMapGenerator : MonoBehaviour {
 		tile.transform.localScale = new Vector3(tile.transform.localScale.x, 2.5f, tile.transform.localScale.z);
 	}
 
-	void SetUngenerated(Tile tile){
-		tile.curTileState = Tile.TileState.Ungenerated;
-		tile.gameObject.GetComponent<Renderer>().material.color = Color.yellow;
-	}
+    Tile CreateTile(int xLoc, int zLoc) {
+        // Create a tile and give it a name based on its location
+        GameObject curTileObject = Instantiate(floorTile, new Vector3(xLoc, 0, zLoc), Quaternion.identity) as GameObject;
+        curTileObject.name = "(" + xLoc + ", " + zLoc + ")";
+
+        // When instantiating a Tile, attach a Tile script to it and set variables
+        Tile tileScript = curTileObject.AddComponent<Tile>();
+        tileScript.location = new Vector2Int (xLoc, zLoc);
+
+        // Add the generated tile to the tiles array and set the object's parent to the map GameObject
+        tiles[xLoc, zLoc] = tileScript;
+        curTileObject.transform.SetParent(map.transform);
+        return tileScript;
+    }
 }
