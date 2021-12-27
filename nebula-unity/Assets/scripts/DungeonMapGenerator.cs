@@ -323,10 +323,25 @@ public class DungeonMapGenerator : MonoBehaviour {
 		|| (i == xLength && j == (yLength - 1)));
 	}
 
-	// All of the functions below are currently placeholders.  These are where we will put the logic to actually place sprites
-	// and models when we have them.  For now they are just differently-colored squares
+    Tile CreateTile(int xLoc, int zLoc) {
+        // Create a tile and give it a name based on its location
+        GameObject curTileObject = Instantiate(floorTile, new Vector3(xLoc, 0, zLoc), Quaternion.identity) as GameObject;
+        curTileObject.name = "(" + xLoc + ", " + zLoc + ")";
 
-	void SetWall(Tile tile){
+        // When instantiating a Tile, attach a Tile script to it and set variables
+        Tile tileScript = curTileObject.AddComponent<Tile>();
+        tileScript.location = new Vector2Int(xLoc, zLoc);
+
+        // Add the generated tile to the tiles array and set the object's parent to the map GameObject
+        tiles[xLoc, zLoc] = tileScript;
+        curTileObject.transform.SetParent(map.transform);
+        return tileScript;
+    }
+
+    // All of the functions below are currently placeholders.  These are where we will put the logic to actually place sprites
+    // and models when we have them.  For now they are just differently-colored squares
+
+    void SetWall(Tile tile){
 		tile.curTileState = Tile.TileState.Wall;
 		tile.gameObject.GetComponent<Renderer>().material.color = Color.grey;
 		tile.transform.localScale = new Vector3(tile.transform.localScale.x, 2f, tile.transform.localScale.z);
@@ -342,19 +357,4 @@ public class DungeonMapGenerator : MonoBehaviour {
 		tile.gameObject.GetComponent<Renderer>().material.color = Color.magenta;
 		tile.transform.localScale = new Vector3(tile.transform.localScale.x, 2.5f, tile.transform.localScale.z);
 	}
-
-    Tile CreateTile(int xLoc, int zLoc) {
-        // Create a tile and give it a name based on its location
-        GameObject curTileObject = Instantiate(floorTile, new Vector3(xLoc, 0, zLoc), Quaternion.identity) as GameObject;
-        curTileObject.name = "(" + xLoc + ", " + zLoc + ")";
-
-        // When instantiating a Tile, attach a Tile script to it and set variables
-        Tile tileScript = curTileObject.AddComponent<Tile>();
-        tileScript.location = new Vector2Int (xLoc, zLoc);
-
-        // Add the generated tile to the tiles array and set the object's parent to the map GameObject
-        tiles[xLoc, zLoc] = tileScript;
-        curTileObject.transform.SetParent(map.transform);
-        return tileScript;
-    }
 }
