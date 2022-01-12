@@ -21,13 +21,14 @@ public class DungeonMapGenerator : MonoBehaviour {
 
 	public bool _____________________;
 
-	public const int XDIMDEFAULT = 100;  // Default size of the dungeon floor in the X direction
-	public const int YDIMDEFAULT = 100;  // Default size of the dungeon floor in the Z direction
+	private const int XDIMDEFAULT = 100;  // Default size of the dungeon floor in the X direction
+	private const int YDIMDEFAULT = 100;  // Default size of the dungeon floor in the Z direction
 
-	public int mapXSize;
-	public int mapYSize;
+    private Vector2Int mapSize;        // Given map maximum allowed boundaries
+    private Vector2Int curMaxBounds = new Vector2Int(int.MinValue, int.MinValue);   // Current maximum generated bounds (x,y)
+    private Vector2Int curMinBounds = new Vector2Int(int.MaxValue, int.MaxValue);   // Current minimum generated bounds (X,y)
 
-	public int curRoomFailures = 0;  // How many times the algorithm has currently failed to place a room
+	private int curRoomFailures = 0;  // How many times the algorithm has currently failed to place a room
 	List<Tile> potentialDoorTiles;
 
 	Tile[,] tiles;
@@ -59,8 +60,8 @@ public class DungeonMapGenerator : MonoBehaviour {
 	public Map GenerateMap(int xSize = XDIMDEFAULT, int ySize = YDIMDEFAULT){
 		ResetGenerationVariables();
 
-		mapXSize = xSize;
-		mapYSize = ySize;
+		mapSize.x = xSize;
+		mapSize.y = ySize;
 
 		// Create an empty parent object for the map
 		map = new GameObject("Map");	
@@ -126,8 +127,10 @@ public class DungeonMapGenerator : MonoBehaviour {
 
 		// Check if we can fit a room here
 		if (CheckTiles(xLocation, yLocation, xLength, yLength, direction)) {
-			// Good, lets generate it!
-			for (int i = -xLength; i <= xLength; ++i) {
+            // Good, lets generate it and update our current map boundaries!
+            UpdateMapBoundaries(xLocation, yLocation, xLength, yLength, direction);
+
+            for (int i = -xLength; i <= xLength; ++i) {
 				for (int j = 0; j < yLength; ++j) {
 					Tile curTile = null;
 
@@ -150,27 +153,27 @@ public class DungeonMapGenerator : MonoBehaviour {
 					} else {
                         Vector2Int loc = new Vector2Int(0,0);
 						switch (direction) {
-						case Direction.North:
-                            loc.x = xLocation + i;
-                            loc.y = yLocation + j;
-							break;
-						case Direction.South:
-                            loc.x = xLocation + i;
-                            loc.y = yLocation - j;
-							break;
-						case Direction.East:
-                            loc.x = xLocation + j;
-                            loc.y = yLocation + i;
-							break;
-						case Direction.West:
-                            loc.x = xLocation - j;
-                            loc.y = yLocation + i;
-                            break;
-                        default:
-                            if (generationDebugLogs) {
-                                Debug.LogError("Invalid room direction.");
-                            }
-                            break;
+						    case Direction.North:
+                                loc.x = xLocation + i;
+                                loc.y = yLocation + j;
+							    break;
+						    case Direction.South:
+                                loc.x = xLocation + i;
+                                loc.y = yLocation - j;
+							    break;
+						    case Direction.East:
+                                loc.x = xLocation + j;
+                                loc.y = yLocation + i;
+							    break;
+						    case Direction.West:
+                                loc.x = xLocation - j;
+                                loc.y = yLocation + i;
+                                break;
+                            default:
+                                if (generationDebugLogs) {
+                                    Debug.LogError("Invalid room direction.");
+                                }
+                                break;
 						}
 
 						if (Mathf.Abs (i) == xLength || j == 0 || j == (yLength - 1)) {
@@ -313,8 +316,57 @@ public class DungeonMapGenerator : MonoBehaviour {
 	}
 
 	bool IsInMapBoundaries(int x, int y){
-		return (y >= 0 && y < mapXSize && x >= 0 && x < mapYSize);
+		return (y >= 0 && y < mapSize.x && x >= 0 && x < mapSize.y);
 	}
+
+    void UpdateMapBoundaries(int xLocation, int yLocation, int halfRoomWidth, int roomDepth, Direction direction) {
+        roomDepth -= 1; // Small error-correction term to not double-count the door itself
+
+        Vector2Int generatedMax = new Vector2Int();
+        Vector2Int generatedMin = new Vector2Int();
+
+        // Since the algorithm generates room directions, we need to translate these relative values into absolute ones.
+        switch (direction) {
+            case Direction.North:
+                generatedMax.x = xLocation + halfRoomWidth;
+                generatedMin.x = xLocation - halfRoomWidth;
+
+                generatedMax.y = yLocation + roomDepth;
+                generatedMin.y = yLocation;
+                break;
+            case Direction.South:
+                generatedMax.x = xLocation + halfRoomWidth;
+                generatedMin.x = xLocation - halfRoomWidth;
+
+                generatedMax.y = yLocation;
+                generatedMin.y = yLocation - roomDepth;
+                break;
+            case Direction.East:
+                generatedMax.x = xLocation + roomDepth;
+                generatedMin.x = xLocation;
+
+                generatedMax.y = yLocation + halfRoomWidth;
+                generatedMin.y = yLocation - halfRoomWidth;
+                break;
+            case Direction.West:
+                generatedMax.x = xLocation;
+                generatedMin.x = xLocation - roomDepth;
+
+                generatedMax.y = yLocation + halfRoomWidth;
+                generatedMin.y = yLocation - halfRoomWidth;
+                break;
+            default:
+                if (generationDebugLogs) {
+                    Debug.LogError("Invalid room direction when calculating new map boundaries");
+                }
+                break;
+        }
+
+        if (generatedMax.x > curMaxBounds.x) { curMaxBounds.x = generatedMax.x; }
+        if (generatedMax.y > curMaxBounds.y) { curMaxBounds.y = generatedMax.y; }
+        if (generatedMin.x < curMinBounds.x) { curMinBounds.x = generatedMin.x; }
+        if (generatedMin.y < curMinBounds.y) { curMinBounds.y = generatedMin.y; }
+    }
 
 	bool IsCorner(int i, int j, int xLength, int yLength){
 		return ((i == -xLength && j == 0)
