@@ -16,6 +16,9 @@ public class DungeonMapGenerator : MonoBehaviour {
     [Tooltip("Largest dimension a room can have.  Includes walls")]
     public int maxRoomDiameter = 20;
 
+    // TODO: Explain this
+    public const float shapeFactor = 1f;
+
     [Tooltip("Number of failed attempts to place a major feature until generator believes it is done")]
     public int maxAttempts = 100;
 
@@ -36,7 +39,7 @@ public class DungeonMapGenerator : MonoBehaviour {
     //.N.E.
     //..O..
     //.W.S.
-    enum Direction {
+    public enum Direction {
         North,  // +z(y)
         South,  // -z(y)
         East,   // +x
@@ -44,27 +47,29 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     public class PotentialDoorsList {
+        float weightPower = 1f;
+        float totalWeight = 0f;
         List<PotentialDoor> potentialDoors;
-        int totalWeight = 0;
 
-        public PotentialDoorsList() {
+        public PotentialDoorsList(float p = shapeFactor) {
             potentialDoors = new List<PotentialDoor>();
             totalWeight = 0;
+            weightPower = p;
         }
 
         public void AddPotentialDoor(PotentialDoor p) {
             potentialDoors.Add(p);
-            totalWeight += p.weight;
+            totalWeight += Mathf.Pow(p.distance, weightPower);
         }
 
         public PotentialDoor SelectPotentialDoor() {
             // Select a random number from 0-1, then multiply it by the total potential door weight to normalize it
             float selection = Random.Range(0f, 1f) * totalWeight;
-            int curWeight = 0;
+            float curWeight = 0f;
 
             // For each item, add to our cumulative probability function and check if we hit our selection or not
             foreach (PotentialDoor p in potentialDoors) {
-                curWeight += p.weight;
+                curWeight += Mathf.Pow(p.distance, weightPower);
                 if (curWeight >= selection) { return p; }
             }
             return null; // This line should never be reached
@@ -73,11 +78,13 @@ public class DungeonMapGenerator : MonoBehaviour {
 
     public class PotentialDoor {
         public Tile tile;
-        public int weight;
+        public int distance;
+        public Direction direction;
 
-        public PotentialDoor(Tile t, int w) {
+        public PotentialDoor(Tile t, int dis, Direction dir) {
             tile = t;
-            weight = w;
+            distance = dis;
+            direction = dir;
         }
     };
 
@@ -164,7 +171,7 @@ public class DungeonMapGenerator : MonoBehaviour {
                     // Now we want to give each potential door a weight based on how much space it has to generate a room, so
                     // determine which direction we should check space in (there should only be one) and give that tile a weight
                     direction = GetRoomDirection(curTile);
-                    pDoors.AddPotentialDoor(new PotentialDoor(curTile, GetDirectedTileWeight(curTile, direction)));
+                    pDoors.AddPotentialDoor(new PotentialDoor(curTile, GetDirectedTileWeight(curTile, direction), direction));
                 }
             }
 
@@ -173,9 +180,9 @@ public class DungeonMapGenerator : MonoBehaviour {
 
             // The weight of a tile here is actually the max depth of the room, so lets use that information in choosing room size
             int halfRoomWidth = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
-            int roomDepth = Random.Range(minRoomDiameter, Mathf.Min(newDoor.weight, maxRoomDiameter) + 1);
+            int roomDepth = Random.Range(minRoomDiameter, Mathf.Min(newDoor.distance, maxRoomDiameter) + 1);
             
-            GenerateRoom(newDoor.tile.location.x, newDoor.tile.location.y, halfRoomWidth, roomDepth, direction);
+            GenerateRoom(newDoor.tile.location.x, newDoor.tile.location.y, halfRoomWidth, roomDepth, newDoor.direction);
         }
 
         // Now that all the tiles are created, assign them
@@ -369,7 +376,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 		if (generationDebugLogs) {
 			Debug.LogError("No valid direction to place room");
 		}
-		return Direction.North;
+		return Direction.North; // TODO: Direction sentinel
 	}
 
     int GetDirectedTileWeight(Tile startingTile, Direction direction) {
