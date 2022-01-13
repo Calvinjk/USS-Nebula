@@ -44,8 +44,8 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     public class PotentialDoorsList {
-        public List<PotentialDoor> potentialDoors;
-        public int totalWeight = 0;
+        List<PotentialDoor> potentialDoors;
+        int totalWeight = 0;
 
         public PotentialDoorsList() {
             potentialDoors = new List<PotentialDoor>();
