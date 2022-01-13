@@ -29,7 +29,6 @@ public class DungeonMapGenerator : MonoBehaviour {
     private Vector2Int curMinBounds = new Vector2Int(int.MaxValue, int.MaxValue);   // Current minimum generated bounds (X,y)
 
     private int curRoomFailures = 0;  // How many times the algorithm has currently failed to place a room
-    List<Tile> potentialDoorTiles;
 
     Tile[,] tiles;
     GameObject map;
@@ -83,15 +82,11 @@ public class DungeonMapGenerator : MonoBehaviour {
     };
 
     void Awake() {
-        potentialDoorTiles = new List<Tile>();
         map = null;
     }
 
     void ResetGenerationVariables() {
         curRoomFailures = 0;
-        if (potentialDoorTiles != null) {
-            potentialDoorTiles.Clear();
-        }
         curMaxBounds = new Vector2Int(int.MinValue, int.MinValue);
         curMinBounds = new Vector2Int(int.MaxValue, int.MaxValue);
     }
@@ -253,11 +248,6 @@ public class DungeonMapGenerator : MonoBehaviour {
 
 						if (Mathf.Abs (i) == xLength || j == 0 || j == (yLength - 1)) {
 							SetWall(CreateTile(loc.x, loc.y));
-
-							// If this wall tile is NOT a corner, add it to potential list of new doors
-							if (!IsCorner(i, j, xLength, yLength)){
-								potentialDoorTiles.Add (tiles[loc.x, loc.y]);
-							}
 						} else {
 							SetFloor(CreateTile(loc.x, loc.y));
 						}
