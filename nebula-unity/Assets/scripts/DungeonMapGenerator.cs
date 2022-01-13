@@ -4,115 +4,190 @@ using UnityEngine;
 
 // All generated rooms will be an odd number of tiles in at least one dimension to allow for a central door
 public class DungeonMapGenerator : MonoBehaviour {
-	public GameObject floorTile;	// Prefab of a floor tile model to generate.  
+    public GameObject floorTile;    // Prefab of a floor tile model to generate.  
 
-	// Generation variables to mess with
-	[Tooltip("Toggles debug logs for map generation")]
-	public bool generationDebugLogs = false;
+    // Generation variables to mess with
+    [Tooltip("Toggles debug logs for map generation")]
+    public bool generationDebugLogs = false;
 
-	[Header("Generation Variables")]
-	[Tooltip("Smallest dimension a room can have.  Includes walls")]
-	public int minRoomDiameter = 3;
-	[Tooltip("Largest dimension a room can have.  Includes walls")]
-	public int maxRoomDiameter = 20;
+    [Header("Generation Variables")]
+    [Tooltip("Smallest dimension a room can have.  Includes walls")]
+    public int minRoomDiameter = 3;
+    [Tooltip("Largest dimension a room can have.  Includes walls")]
+    public int maxRoomDiameter = 20;
 
-	[Tooltip("Number of failed attempts to place a major feature until generator believes it is done")]
-	public int maxAttempts = 100;
+    [Tooltip("Number of failed attempts to place a major feature until generator believes it is done")]
+    public int maxAttempts = 100;
 
-	public bool _____________________;
+    public bool _____________________;
 
-	private const int XDIMDEFAULT = 100;  // Default size of the dungeon floor in the X direction
-	private const int YDIMDEFAULT = 100;  // Default size of the dungeon floor in the Z direction
+    private const int XDIMDEFAULT = 100;  // Default size of the dungeon floor in the X direction
+    private const int YDIMDEFAULT = 100;  // Default size of the dungeon floor in the Z direction
 
     private Vector2Int mapSize;        // Given map maximum allowed boundaries
     private Vector2Int curMaxBounds = new Vector2Int(int.MinValue, int.MinValue);   // Current maximum generated bounds (x,y)
     private Vector2Int curMinBounds = new Vector2Int(int.MaxValue, int.MaxValue);   // Current minimum generated bounds (X,y)
 
-	private int curRoomFailures = 0;  // How many times the algorithm has currently failed to place a room
-	List<Tile> potentialDoorTiles;
+    private int curRoomFailures = 0;  // How many times the algorithm has currently failed to place a room
+    List<Tile> potentialDoorTiles;
 
-	Tile[,] tiles;
+    Tile[,] tiles;
     GameObject map;
 
-	//.N.E.
-	//..O..
-	//.W.S.
-	enum Direction {
-		North,	// +z(y)
-		South,  // -z(y)
-		East, 	// +x
-		West	// -x
-	}
+    //.N.E.
+    //..O..
+    //.W.S.
+    enum Direction {
+        North,  // +z(y)
+        South,  // -z(y)
+        East,   // +x
+        West    // -x
+    }
 
-	void Awake() {
-		potentialDoorTiles = new List<Tile>();
+    public class PotentialDoorsList {
+        public List<PotentialDoor> potentialDoors;
+        public int totalWeight = 0;
+
+        public PotentialDoorsList() {
+            potentialDoors = new List<PotentialDoor>();
+            totalWeight = 0;
+        }
+
+        public void AddPotentialDoor(PotentialDoor p) {
+            potentialDoors.Add(p);
+            totalWeight += p.weight;
+        }
+
+        public PotentialDoor SelectPotentialDoor() {
+            // Select a random number from 0-1, then multiply it by the total potential door weight to normalize it
+            float selection = Random.Range(0f, 1f) * totalWeight;
+            int curWeight = 0;
+
+            // For each item, add to our cumulative probability function and check if we hit our selection or not
+            foreach (PotentialDoor p in potentialDoors) {
+                curWeight += p.weight;
+                if (curWeight >= selection) { return p; }
+            }
+            return null; // This line should never be reached
+        }
+    }
+
+    public class PotentialDoor {
+        public Tile tile;
+        public int weight;
+
+        public PotentialDoor(Tile t, int w) {
+            tile = t;
+            weight = w;
+        }
+    };
+
+    void Awake() {
+        potentialDoorTiles = new List<Tile>();
         map = null;
-	}
+    }
 
-	void ResetGenerationVariables() {
-		curRoomFailures = 0;
-		if (potentialDoorTiles != null) {
-			potentialDoorTiles.Clear();	
-		}
-	}
+    void ResetGenerationVariables() {
+        curRoomFailures = 0;
+        if (potentialDoorTiles != null) {
+            potentialDoorTiles.Clear();
+        }
+        curMaxBounds = new Vector2Int(int.MinValue, int.MinValue);
+        curMinBounds = new Vector2Int(int.MaxValue, int.MaxValue);
+    }
 
-	// This function will generate a map given some bounding dimensions
-	public Map GenerateMap(int xSize = XDIMDEFAULT, int ySize = YDIMDEFAULT){
-		ResetGenerationVariables();
+    // This function will generate a map given some bounding dimensions
+    public Map GenerateMap(int xSize = XDIMDEFAULT, int ySize = YDIMDEFAULT) {
+        ResetGenerationVariables();
 
-		mapSize.x = xSize;
-		mapSize.y = ySize;
+        mapSize.x = xSize;
+        mapSize.y = ySize;
 
-		// Create an empty parent object for the map
-		map = new GameObject("Map");	
-		map.transform.position = new Vector3(0f, 0f, 0f);
-		Map mapScript = map.AddComponent<Map>();
-		mapScript.SetMapSize(xSize, ySize);
+        // Create an empty parent object for the map
+        map = new GameObject("Map");
+        map.transform.position = new Vector3(0f, 0f, 0f);
+        Map mapScript = map.AddComponent<Map>();
+        mapScript.SetMapSize(xSize, ySize);
 
-		tiles = new Tile[xSize, ySize];
+        tiles = new Tile[xSize, ySize];
 
-		// Create the initial room in the center (ish)
-		int xLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
-		int yLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1);
+        // Create the initial room in the center (ish)
+        int xLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
+        int yLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1);
 
-		int xLocation = (xSize / 2) - (xLength / 2);
-		int yLocation = (ySize / 2) - (yLength / 2);
+        int xLocation = (xSize / 2) - (xLength / 2);
+        int yLocation = (ySize / 2) - (yLength / 2);
 
-		if (generationDebugLogs){ 
-			Debug.Log("Placing starting room at (" + xLocation + "," + yLocation + ")...\n" +
-				"Dimensions of " + (xLength * 2 + 1) + "x" + yLength + "...\n" +
-				"Direction: " + Direction.North);
-		}
+        if (generationDebugLogs) {
+            Debug.Log("Placing starting room at (" + xLocation + "," + yLocation + ")...\n" +
+                "Dimensions of " + (xLength * 2 + 1) + "x" + yLength + "...\n" +
+                "Direction: " + Direction.North);
+        }
 
-		GenerateRoom(xLocation, yLocation, xLength, yLength, Direction.North);
+        GenerateRoom(xLocation, yLocation, xLength, yLength, Direction.North);
 
-		// Keep going!
-		while (curRoomFailures < maxAttempts){
-			// Re-randomize the size variables
-			xLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
-			yLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1);
+        // Keep going!
+        while (curRoomFailures < maxAttempts) {
+            // Randomly decide if we are going to attach a room vertically or horizontally
+            Direction direction = Direction.North;  // Placeholder, this will be updated later
+            int checkDirection = Random.Range(0, 2);
 
-			// Try to make a new room!
-			if (potentialDoorTiles.Count == 0) {
-				Debug.LogError("Somehow ran out of valid wall tiles to create a door on");
-			} else {
-				int index = Random.Range(0, potentialDoorTiles.Count);
+            Vector2Int sliceChoiceBounds = new Vector2Int(); // (min, max)
+            Vector2Int sliceEndpoints = new Vector2Int();  // (min, max)
+            switch (checkDirection) {
+                case 0: // Vertical
+                    sliceChoiceBounds = new Vector2Int(curMinBounds.x, curMaxBounds.x);
+                    sliceEndpoints = new Vector2Int(curMinBounds.y, curMaxBounds.y);
+                    break;
+                case 1: // Horizontal
+                    sliceChoiceBounds = new Vector2Int(curMinBounds.y, curMaxBounds.y);
+                    sliceEndpoints = new Vector2Int(curMinBounds.x, curMaxBounds.x);
+                    break;
+            }
 
-				Tile curTile = potentialDoorTiles [index]; 
-				potentialDoorTiles.RemoveAt(index);
+            // Pick a random line between the currently generated bounds
+            // NOTE: The edges of the bounds are not actually available to put a door,
+            //       therefore, we want our allowed choices to be min + 1 to max - 1.  
+            //       Random.Range(int, int) is (inclusive, exclusive], so our random function looks like below
+            int lineToCheck = Random.Range(sliceChoiceBounds.x + 1, sliceChoiceBounds.y);
+            PotentialDoorsList pDoors = new PotentialDoorsList();
 
-				// Determine which direction we should go in (There should only be one)
-				Direction direction = GetRoomDirection(curTile);
+            for (int i = sliceEndpoints.x; i <= sliceEndpoints.y; ++i) {
+                Tile curTile = null;
+                switch (checkDirection) {
+                    case 0: // Vertical
+                        curTile = tiles[lineToCheck, i];
+                        break;
+                    case 1: // Horizontal
+                        curTile = tiles[i, lineToCheck];
+                        break;
+                }
 
-				GenerateRoom(curTile.location.x, curTile.location.y, xLength, yLength, direction);
-			}
-		}
+                // Look along the slice line for walls we intersect.  These will be our potential doors
+                if (curTile != null && curTile.curTileState == Tile.TileState.Wall && !IsCorner(curTile.location.x, curTile.location.y)) {
+
+                    // Now we want to give each potential door a weight based on how much space it has to generate a room, so
+                    // determine which direction we should check space in (there should only be one) and give that tile a weight
+                    direction = GetRoomDirection(curTile);
+                    pDoors.AddPotentialDoor(new PotentialDoor(curTile, GetDirectedTileWeight(curTile, direction)));
+                }
+            }
+
+            // At this point we should have a list of potential door tiles populated and all we need to do is pick one!
+            PotentialDoor newDoor = pDoors.SelectPotentialDoor();
+
+            // The weight of a tile here is actually the max depth of the room, so lets use that information in choosing room size
+            int halfRoomWidth = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
+            int roomDepth = Random.Range(minRoomDiameter, Mathf.Min(newDoor.weight, maxRoomDiameter) + 1);
+            
+            GenerateRoom(newDoor.tile.location.x, newDoor.tile.location.y, halfRoomWidth, roomDepth, direction);
+        }
 
         // Now that all the tiles are created, assign them
         mapScript.tileMap = tiles;
 
         return mapScript;
-	}
+    }
 
 	// xLocation, yLocation: 	Coordinates to a door of this room.
 	// xLength: 				How far perpendicular to the inner door face the room extends from the door tile
@@ -292,33 +367,102 @@ public class DungeonMapGenerator : MonoBehaviour {
 	// No need to worry about North bias for this function as there should only be one valid room direction.
 	// Therefore, the first one we find is the only valid one
 	Direction GetRoomDirection(Tile door){
-		if (IsInMapBoundaries(door.location.x, door.location.y + 1) &&
-            (tiles [door.location.x, door.location.y + 1] == null ||
-		    tiles [door.location.x, door.location.y + 1].curTileState == Tile.TileState.Ungenerated)) {
+		if (IsInMapBoundaries(door.location.x, door.location.y + 1) && tiles[door.location.x, door.location.y + 1] == null) {
 			   return Direction.North;
-		} else if (IsInMapBoundaries(door.location.x, door.location.y - 1) &&
-            (tiles [door.location.x, door.location.y - 1] == null ||
-            tiles [door.location.x, door.location.y - 1].curTileState == Tile.TileState.Ungenerated)) { 
+		} else if (IsInMapBoundaries(door.location.x, door.location.y - 1) && tiles[door.location.x, door.location.y - 1] == null) { 
 			   return Direction.South;
-		} else if (IsInMapBoundaries(door.location.x + 1, door.location.y) &&
-            (tiles [door.location.x + 1, door.location.y] == null ||
-            tiles [door.location.x + 1, door.location.y].curTileState == Tile.TileState.Ungenerated)) {
+		} else if (IsInMapBoundaries(door.location.x + 1, door.location.y) && tiles[door.location.x + 1, door.location.y] == null) {
 			    return Direction.East;
-		} else if (IsInMapBoundaries(door.location.x - 1, door.location.y) &&
-            (tiles [door.location.x - 1, door.location.y] == null ||
-            tiles [door.location.x - 1, door.location.y].curTileState == Tile.TileState.Ungenerated)) {
+		} else if (IsInMapBoundaries(door.location.x - 1, door.location.y) && tiles[door.location.x - 1, door.location.y] == null) {
 			    return Direction.West;
 		}
 		if (generationDebugLogs) {
-			Debug.Log("No valid direction to place room");
+			Debug.LogError("No valid direction to place room");
 		}
 		return Direction.North;
 	}
 
-	bool IsInMapBoundaries(int x, int y){
+    int GetDirectedTileWeight(Tile startingTile, Direction direction) {
+        int weight = 0;
+        Vector2Int curLoc = new Vector2Int(startingTile.location.x, startingTile.location.y);
+
+        switch (direction) {
+            case Direction.North:
+                ++curLoc.y;
+                break;
+            case Direction.South:
+                --curLoc.y;
+                break;
+            case Direction.East:
+                ++curLoc.x;
+                break;
+            case Direction.West:
+                --curLoc.x;
+                break;
+        }
+
+        while (IsInMapBoundaries(curLoc.x, curLoc.y) && tiles[curLoc.x, curLoc.y] == null) {
+            // Currently we will set weight equal to the amount of consecutive empty tiles in direction
+            // We could square this number or perform other operations to get more interesting choices
+            ++weight;
+
+            switch (direction) {
+                case Direction.North:
+                    ++curLoc.y;
+                    break;
+                case Direction.South:
+                    --curLoc.y;
+                    break;
+                case Direction.East:
+                    ++curLoc.x;
+                    break;
+                case Direction.West:
+                    --curLoc.x;
+                    break;
+            }
+        }
+
+        return weight;
+    }
+
+    // start:       Tile to start from
+    // direction:   Direction to search in
+    // distance:    How far to jump (default 1)
+    Tile GetNextTile(Tile start, Direction direction, int distance = 1) {
+        Tile returnTile = null;
+        switch (direction) {
+            case Direction.North:
+                if (IsInMapBoundaries(start.location.x, start.location.y + distance)) {
+                    returnTile = tiles[start.location.x, start.location.y + distance];
+                }
+                break;
+            case Direction.South:
+                if (IsInMapBoundaries(start.location.x, start.location.y - distance)) {
+                    returnTile = tiles[start.location.x, start.location.y - distance];
+                }
+                break;
+            case Direction.East:
+                if (IsInMapBoundaries(start.location.x + distance, start.location.y)) {
+                    returnTile = tiles[start.location.x + distance, start.location.y];
+                }
+                break;
+            case Direction.West:
+                if (IsInMapBoundaries(start.location.x - distance, start.location.y)) {
+                    returnTile = tiles[start.location.x - distance, start.location.y];
+                }
+                break;
+        }
+        return returnTile;
+    }
+
+    bool IsInMapBoundaries(int x, int y){
 		return (y >= 0 && y < mapSize.x && x >= 0 && x < mapSize.y);
 	}
 
+    // xLocation, yLocation: 	Coordinates to a door of this room.
+    // halfRoomWidth:           How far perpendicular to the inner door face the room extends from the door tile
+    // roomDepth:				How far from the door the room extends in depth towards Direction
+    // direction:				In what direction the room extends from the door
     void UpdateMapBoundaries(int xLocation, int yLocation, int halfRoomWidth, int roomDepth, Direction direction) {
         roomDepth -= 1; // Small error-correction term to not double-count the door itself
 
@@ -368,12 +512,52 @@ public class DungeonMapGenerator : MonoBehaviour {
         if (generatedMin.y < curMinBounds.y) { curMinBounds.y = generatedMin.y; }
     }
 
+    // i, j is the position of the tile in question
+    // xlength is the length from the door to the nearest wall
+    // yLength is the depth of the room (from door to far wall)
 	bool IsCorner(int i, int j, int xLength, int yLength){
 		return ((i == -xLength && j == 0)
 		|| (i == -xLength && j == (yLength - 1))
 		|| (i == xLength && j == 0)
 		|| (i == xLength && j == (yLength - 1)));
 	}
+
+    // x, y is the postion of the tile in question
+    bool IsCorner(int x, int y) {
+        // A tile is a corner if any of the below combinations are both walls:
+        // (top, right) (right, bottom) (bottom, left) (left, top)
+
+        Tile top, bottom, left, right;
+        top = bottom = left = right = null;
+
+        if (IsInMapBoundaries(x, y + 1)) { top = tiles[x, y + 1]; }
+        if (IsInMapBoundaries(x, y - 1)) { bottom = tiles[x, y - 1]; }
+        if (IsInMapBoundaries(x - 1, y)) { left = tiles[x - 1, y]; }
+        if (IsInMapBoundaries(x + 1, y)) { right = tiles[x + 1, y]; }
+
+        // right, bottom
+        if ((right != null && bottom != null) &&
+            right.curTileState == Tile.TileState.Wall && bottom.curTileState == Tile.TileState.Wall) {
+                return true;
+        }
+        // bottom, left
+        if ((bottom != null && left != null) &&
+            bottom.curTileState == Tile.TileState.Wall && left.curTileState == Tile.TileState.Wall) {
+            return true;
+        }
+        // left, top
+        if ((left != null && top != null) &&
+            left.curTileState == Tile.TileState.Wall && top.curTileState == Tile.TileState.Wall) {
+            return true;
+        }
+        // top, right
+        if ((top != null && right != null) &&
+            top.curTileState == Tile.TileState.Wall && right.curTileState == Tile.TileState.Wall) {
+            return true;
+        }
+
+        return false;
+    }
 
     Tile CreateTile(int xLoc, int zLoc) {
         // Create a tile and give it a name based on its location
