@@ -4,20 +4,22 @@ using UnityEngine;
 
 // All generated rooms will be an odd number of tiles in at least one dimension to allow for a central door
 public class DungeonMapGenerator : MonoBehaviour {
+    [Header("Physical prefabs for generation objects")]
     public GameObject floorTile;    // Prefab of a floor tile model to generate.  
 
     // Generation variables to mess with
+    [Header("Generation Variables")]
     [Tooltip("Toggles debug logs for map generation")]
     public bool generationDebugLogs = false;
 
-    [Header("Generation Variables")]
     [Tooltip("Smallest dimension a room can have.  Includes walls")]
     public int minRoomDiameter = 3;
     [Tooltip("Largest dimension a room can have.  Includes walls")]
     public int maxRoomDiameter = 20;
 
-    // TODO: Explain this
-    public const float shapeFactor = 1f;
+    [Range(0.0f, 10.0f)]
+    [Tooltip("Larger the number, more likely that walls with more open space are chosen as doors")]
+    public float shapeFactor = 1f;
 
     [Tooltip("Number of failed attempts to place a major feature until generator believes it is done")]
     public int maxAttempts = 100;
@@ -36,14 +38,12 @@ public class DungeonMapGenerator : MonoBehaviour {
     Tile[,] tiles;
     GameObject map;
 
-    //.N.E.
-    //..O..
-    //.W.S.
     public enum Direction {
         North,  // +z(y)
         South,  // -z(y)
         East,   // +x
-        West    // -x
+        West,   // -x
+        INVALID // Sentinel value
     }
 
     public class PotentialDoorsList {
@@ -51,10 +51,16 @@ public class DungeonMapGenerator : MonoBehaviour {
         float totalWeight = 0f;
         List<PotentialDoor> potentialDoors;
 
-        public PotentialDoorsList(float p = shapeFactor) {
+        public PotentialDoorsList() {
             potentialDoors = new List<PotentialDoor>();
             totalWeight = 0;
-            weightPower = p;
+            weightPower = 1.0f;
+        }
+
+        public PotentialDoorsList(float shapeFactor) {
+            potentialDoors = new List<PotentialDoor>();
+            totalWeight = 0;
+            weightPower = shapeFactor;
         }
 
         public void AddPotentialDoor(PotentialDoor p) {
@@ -72,6 +78,7 @@ public class DungeonMapGenerator : MonoBehaviour {
                 curWeight += Mathf.Pow(p.distance, weightPower);
                 if (curWeight >= selection) { return p; }
             }
+            Debug.LogError("Reached end of potential doors without picking one.  This should never happen, check Calvin's math!");
             return null; // This line should never be reached
         }
     }
@@ -131,9 +138,10 @@ public class DungeonMapGenerator : MonoBehaviour {
         // Keep going!
         while (curRoomFailures < maxAttempts) {
             // Randomly decide if we are going to attach a room vertically or horizontally
-            Direction direction = Direction.North;  // Placeholder, this will be updated later
+            Direction direction = Direction.INVALID;  // Placeholder, this will be updated later
             int checkDirection = Random.Range(0, 2);
 
+            // Take a slice of the map and check along it for potential door tiles!
             Vector2Int sliceChoiceBounds = new Vector2Int(); // (min, max)
             Vector2Int sliceEndpoints = new Vector2Int();  // (min, max)
             switch (checkDirection) {
@@ -152,7 +160,7 @@ public class DungeonMapGenerator : MonoBehaviour {
             //       therefore, we want our allowed choices to be min + 1 to max - 1.  
             //       Random.Range(int, int) is (inclusive, exclusive], so our random function looks like below
             int lineToCheck = Random.Range(sliceChoiceBounds.x + 1, sliceChoiceBounds.y);
-            PotentialDoorsList pDoors = new PotentialDoorsList();
+            PotentialDoorsList pDoors = new PotentialDoorsList(shapeFactor);
 
             for (int i = sliceEndpoints.x; i <= sliceEndpoints.y; ++i) {
                 Tile curTile = null;
@@ -175,10 +183,10 @@ public class DungeonMapGenerator : MonoBehaviour {
                 }
             }
 
-            // At this point we should have a list of potential door tiles populated and all we need to do is pick one!
+            // At this point we should have a list of potential door tiles populated and weighted, so all we need to do is pick one!
             PotentialDoor newDoor = pDoors.SelectPotentialDoor();
 
-            // The weight of a tile here is actually the max depth of the room, so lets use that information in choosing room size
+            // The distance variable of a tile here is actually the max depth of the room, so lets use that information in choosing room size to reduce failures
             int halfRoomWidth = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
             int roomDepth = Random.Range(minRoomDiameter, Mathf.Min(newDoor.distance, maxRoomDiameter) + 1);
             
@@ -376,7 +384,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 		if (generationDebugLogs) {
 			Debug.LogError("No valid direction to place room");
 		}
-		return Direction.North; // TODO: Direction sentinel
+		return Direction.INVALID;
 	}
 
     int GetDirectedTileWeight(Tile startingTile, Direction direction) {
@@ -508,16 +516,6 @@ public class DungeonMapGenerator : MonoBehaviour {
         if (generatedMin.x < curMinBounds.x) { curMinBounds.x = generatedMin.x; }
         if (generatedMin.y < curMinBounds.y) { curMinBounds.y = generatedMin.y; }
     }
-
-    // i, j is the position of the tile in question
-    // xlength is the length from the door to the nearest wall
-    // yLength is the depth of the room (from door to far wall)
-	bool IsCorner(int i, int j, int xLength, int yLength){
-		return ((i == -xLength && j == 0)
-		|| (i == -xLength && j == (yLength - 1))
-		|| (i == xLength && j == 0)
-		|| (i == xLength && j == (yLength - 1)));
-	}
 
     // x, y is the postion of the tile in question
     bool IsCorner(int x, int y) {
