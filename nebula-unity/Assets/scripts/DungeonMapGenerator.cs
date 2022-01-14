@@ -78,8 +78,7 @@ public class DungeonMapGenerator : MonoBehaviour {
                 curWeight += Mathf.Pow(p.distance, weightPower);
                 if (curWeight >= selection) { return p; }
             }
-            Debug.LogError("Reached end of potential doors without picking one.  This should never happen, check Calvin's math!");
-            return null; // This line should never be reached
+            return null; // This line will ONLY be reached if the list of potential doors is empty
         }
     }
 
@@ -185,6 +184,9 @@ public class DungeonMapGenerator : MonoBehaviour {
 
             // At this point we should have a list of potential door tiles populated and weighted, so all we need to do is pick one!
             PotentialDoor newDoor = pDoors.SelectPotentialDoor();
+
+            // If we never found any potential doors, we should try again with a new slice
+            if (newDoor == null) { continue; }
 
             // The distance variable of a tile here is actually the max depth of the room, so lets use that information in choosing room size to reduce failures
             int halfRoomWidth = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
