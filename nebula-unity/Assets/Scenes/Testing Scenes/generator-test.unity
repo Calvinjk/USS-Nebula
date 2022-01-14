@@ -758,8 +758,13 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4554855316342201989, guid: e39c77dbec04f08488923d6a5081753b,
         type: 3}
+      propertyPath: shapeFactor
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4554855316342201989, guid: e39c77dbec04f08488923d6a5081753b,
+        type: 3}
       propertyPath: maxRoomDiameter
-      value: 30
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: 4554855316342201989, guid: e39c77dbec04f08488923d6a5081753b,
         type: 3}
