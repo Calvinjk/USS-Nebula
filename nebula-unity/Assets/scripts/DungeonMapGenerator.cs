@@ -69,6 +69,9 @@ public class DungeonMapGenerator : MonoBehaviour {
         }
 
         public PotentialDoor SelectPotentialDoor() {
+            // If weightPower == 0, weights don't matter so we should skip all the logic and iteration and just return a random element.
+            if (weightPower == 0) { return potentialDoors[Random.Range(0, potentialDoors.Count)]; }
+
             // Select a random number from 0-1, then multiply it by the total potential door weight to normalize it
             float selection = Random.Range(0f, 1f) * totalWeight;
             float curWeight = 0f;
