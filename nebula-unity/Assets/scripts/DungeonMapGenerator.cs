@@ -569,17 +569,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         // When instantiating a Tile, attach a Tile script to it and set variables
         Tile tileScript = curTileObject.AddComponent<Tile>();
         tileScript.location = new Vector2Int(xLoc, zLoc);
-        switch (type) {
-            case Tile.TileType.Wall:
-                tileScript.curTileType = Tile.TileType.Wall;
-                break;
-            case Tile.TileType.Floor:
-                tileScript.curTileType = Tile.TileType.Floor;
-                break;
-            case Tile.TileType.Door:
-                tileScript.curTileType = Tile.TileType.Door;
-                break;
-        }
+        tileScript.curTileType = type;
 
         // Add the generated tile to the tiles array and set the object's parent to the map GameObject
         tiles[xLoc, zLoc] = tileScript;
