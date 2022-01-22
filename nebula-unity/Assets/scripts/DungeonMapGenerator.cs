@@ -5,7 +5,9 @@ using UnityEngine;
 // All generated rooms will be an odd number of tiles in at least one dimension to allow for a central door
 public class DungeonMapGenerator : MonoBehaviour {
     [Header("Physical prefabs for generation objects")]
-    public GameObject floorTile;    // Prefab of a floor tile model to generate.  
+    public GameObject floorTile;   // Prefab of a floor tile model to generate.  
+    public GameObject wallTile;    // Prefab of a wall tile model to generate.  
+    public GameObject doorTile;    // Prefab of a door tile model to generate.  
 
     // Generation variables to mess with
     [Header("Generation Variables")]
@@ -176,7 +178,7 @@ public class DungeonMapGenerator : MonoBehaviour {
                 }
 
                 // Look along the slice line for walls we intersect.  These will be our potential doors
-                if (curTile != null && curTile.curTileState == Tile.TileState.Wall && !IsCorner(curTile.location.x, curTile.location.y)) {
+                if (curTile != null && curTile.curTileType == Tile.TileType.Wall && !IsCorner(curTile.location.x, curTile.location.y)) {
 
                     // Now we want to give each potential door a weight based on how much space it has to generate a room, so
                     // determine which direction we should check space in (there should only be one) and give that tile a weight
@@ -229,7 +231,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 						curTile = tiles [xLocation, yLocation];
 
 						// The previous state of the tile should be a wall, but now its a door!
-						if (curTile != null && curTile.curTileState == Tile.TileState.Wall) {
+						if (curTile != null && curTile.curTileType == Tile.TileType.Wall) {
 							SetDoor(curTile);
 						} else {
 							// This should be the first room.
@@ -238,7 +240,7 @@ public class DungeonMapGenerator : MonoBehaviour {
 							}
 
                             // Create a new tile and set it to a wall
-							SetWall(CreateTile(xLocation, yLocation));
+							CreateTile(Tile.TileType.Wall, xLocation, yLocation);
 						}
 					} else {
                         Vector2Int loc = new Vector2Int(0,0);
@@ -267,9 +269,9 @@ public class DungeonMapGenerator : MonoBehaviour {
 						}
 
 						if (Mathf.Abs (i) == xLength || j == 0 || j == (yLength - 1)) {
-							SetWall(CreateTile(loc.x, loc.y));
+							CreateTile(Tile.TileType.Wall, loc.x, loc.y);
 						} else {
-							SetFloor(CreateTile(loc.x, loc.y));
+						    CreateTile(Tile.TileType.Floor, loc.x, loc.y);
 						}
 					}
 				}
@@ -344,9 +346,9 @@ public class DungeonMapGenerator : MonoBehaviour {
 				}
 
 				// Check if this tile is ungenerated
-				if (curTile != null && curTile.curTileState != Tile.TileState.Ungenerated) {
+				if (curTile != null && curTile.curTileType != Tile.TileType.Ungenerated) {
 					// If this tile as already been generated, check if it is a wall
-					if (curTile.curTileState != Tile.TileState.Wall) {
+					if (curTile.curTileType != Tile.TileType.Wall) {
 
 						// If the tile is not a wall, we have overlap and should return false
 						if (generationDebugLogs) {
@@ -537,36 +539,47 @@ public class DungeonMapGenerator : MonoBehaviour {
 
         // right, bottom
         if ((right != null && bottom != null) &&
-            right.curTileState == Tile.TileState.Wall && bottom.curTileState == Tile.TileState.Wall) {
+            right.curTileType == Tile.TileType.Wall && bottom.curTileType == Tile.TileType.Wall) {
                 return true;
         }
         // bottom, left
         if ((bottom != null && left != null) &&
-            bottom.curTileState == Tile.TileState.Wall && left.curTileState == Tile.TileState.Wall) {
+            bottom.curTileType == Tile.TileType.Wall && left.curTileType == Tile.TileType.Wall) {
             return true;
         }
         // left, top
         if ((left != null && top != null) &&
-            left.curTileState == Tile.TileState.Wall && top.curTileState == Tile.TileState.Wall) {
+            left.curTileType == Tile.TileType.Wall && top.curTileType == Tile.TileType.Wall) {
             return true;
         }
         // top, right
         if ((top != null && right != null) &&
-            top.curTileState == Tile.TileState.Wall && right.curTileState == Tile.TileState.Wall) {
+            top.curTileType == Tile.TileType.Wall && right.curTileType == Tile.TileType.Wall) {
             return true;
         }
 
         return false;
     }
 
-    Tile CreateTile(int xLoc, int zLoc) {
+    Tile CreateTile(Tile.TileType type, int xLoc, int zLoc) {
         // Create a tile and give it a name based on its location
-        GameObject curTileObject = Instantiate(floorTile, new Vector3(xLoc, 0, zLoc), Quaternion.identity) as GameObject;
+        GameObject curTileObject = Instantiate(TileTypeToGameObject(type), new Vector3(xLoc, 0, zLoc), Quaternion.identity) as GameObject;
         curTileObject.name = "(" + xLoc + ", " + zLoc + ")";
 
         // When instantiating a Tile, attach a Tile script to it and set variables
         Tile tileScript = curTileObject.AddComponent<Tile>();
         tileScript.location = new Vector2Int(xLoc, zLoc);
+        switch (type) {
+            case Tile.TileType.Wall:
+                tileScript.curTileType = Tile.TileType.Wall;
+                break;
+            case Tile.TileType.Floor:
+                tileScript.curTileType = Tile.TileType.Floor;
+                break;
+            case Tile.TileType.Door:
+                tileScript.curTileType = Tile.TileType.Door;
+                break;
+        }
 
         // Add the generated tile to the tiles array and set the object's parent to the map GameObject
         tiles[xLoc, zLoc] = tileScript;
@@ -574,23 +587,37 @@ public class DungeonMapGenerator : MonoBehaviour {
         return tileScript;
     }
 
-    // All of the functions below are currently placeholders.  These are where we will put the logic to actually place sprites
-    // and models when we have them.  For now they are just differently-colored squares
+    GameObject TileTypeToGameObject(Tile.TileType type) {
+        switch (type) {
+            case Tile.TileType.Wall:
+                return wallTile;
+            case Tile.TileType.Floor:
+                return floorTile;
+            case Tile.TileType.Door:
+                return doorTile;
+            default:
+                Debug.LogError("TileType does not have corresponding GameObject set up in DungeonMapGenerator.cs");
+                return null;
+        }
+    }
 
-    void SetWall(Tile tile){
-		tile.curTileState = Tile.TileState.Wall;
-		tile.gameObject.GetComponent<Renderer>().material.color = Color.grey;
-		tile.transform.localScale = new Vector3(tile.transform.localScale.x, 2f, tile.transform.localScale.z);
-	}
+    //The below functions work by creating an entirely new tile and deleting the old one.
+    // We should change this in the future to use object pooling or another more efficient methods
+    void SetWall(Tile oldTile){
+        Tile newTile = CreateTile(Tile.TileType.Wall, oldTile.location.x, oldTile.location.y);
+        newTile.curTileType = Tile.TileType.Wall;
+        Destroy(oldTile);
+    }
 
-	void SetFloor(Tile tile){
-		tile.curTileState = Tile.TileState.Open;
-		tile.gameObject.GetComponent<Renderer>().material.color = Color.white;
-	}
+	void SetFloor(Tile oldTile){
+        Tile newTile = CreateTile(Tile.TileType.Floor, oldTile.location.x, oldTile.location.y);
+        newTile.curTileType = Tile.TileType.Floor;
+        Destroy(oldTile);
+    }
 
-	void SetDoor(Tile tile){
-		tile.curTileState = Tile.TileState.Door;
-		tile.gameObject.GetComponent<Renderer>().material.color = Color.magenta;
-		tile.transform.localScale = new Vector3(tile.transform.localScale.x, 2.5f, tile.transform.localScale.z);
+	void SetDoor(Tile oldTile){
+        Tile newTile = CreateTile(Tile.TileType.Door, oldTile.location.x, oldTile.location.y);
+        newTile.curTileType = Tile.TileType.Door;
+        Destroy(oldTile);
 	}
 }
