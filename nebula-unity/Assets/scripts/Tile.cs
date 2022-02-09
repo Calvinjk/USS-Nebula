@@ -16,18 +16,13 @@ public class Tile : MonoBehaviour {
 	public Vector2Int location;
 	public TileState curTileState = TileState.Open;
 
-    //////////////////////// Constructors
-    public Tile() {
-        curTileState = TileState.Ungenerated;
-    }
+	// Constructors
 	public Tile(Vector2Int loc, TileState state = TileState.Open) {
 		location = loc;
 		curTileState = state;
 	}
 
-    ////////////////////////
-
-    public void PrintTile() {
+	public void PrintTile() {
 		Debug.Log("TileState: " + curTileState
 			+ ", Location: (" + location.x + ", " + location.y + ")");
 	}
