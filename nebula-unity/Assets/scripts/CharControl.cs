@@ -2,22 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CharControl : CharacterSuper {
+public class CharControl : MonoBehaviour {
 
     bool debugLogs = false;
     float currRot;
 
     [SerializeField]
+    float moveSpeed = 4f; //Change in inspector to adjust move speed
     Vector3 forward, right; // Keeps track of our relative forward and right vectors
-    public GameObject bullet;
-
+    
     void Start()
     {
-        moveSpeed = 6f; //Change in inspector to adjust move speed
-        maxhp = 100f;
-        hp = maxhp;
-
-
         forward = Camera.main.transform.forward; // Set forward to equal the camera's forward vector
         forward.y = 0; // make sure y is 0
         forward = Vector3.Normalize(forward); // make sure the length of vector is set to a max of 1.0
@@ -30,7 +25,7 @@ public class CharControl : CharacterSuper {
             Move();
         //get the current camera rotation
         currRot = GameObject.Find("Camera").GetComponent<CamControl>().currRot;
-        BasicAttack();
+
     }
     
     void Move()
@@ -47,14 +42,6 @@ public class CharControl : CharacterSuper {
         //rotate the direction of movement depending on camera current rotation
         transform.position += Quaternion.Euler(0, currRot, 0) * rightMovement; // move our transform's position right/left
         transform.position += Quaternion.Euler(0, currRot, 0) * forwardMovement; // Move our transform's position up/down
-    }
-
-    void BasicAttack(){
-        if (Input.GetKeyDown(KeyCode.Space)){
-            GameObject firedbullet = Instantiate(bullet, transform.TransformPoint(Vector3.forward*2), transform.rotation);
-            Rigidbody _rb = firedbullet.GetComponent<Rigidbody>();
-            _rb.AddForce(firedbullet.transform.forward*500f);
-        }
     }
 
 }
