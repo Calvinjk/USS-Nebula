@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // All generated rooms will be an odd number of tiles in at least one dimension to allow for a central door
 public class DungeonMapGenerator : MonoBehaviour {
@@ -593,4 +594,69 @@ public class DungeonMapGenerator : MonoBehaviour {
 		tile.gameObject.GetComponent<Renderer>().material.color = Color.magenta;
 		tile.transform.localScale = new Vector3(tile.transform.localScale.x, 2.5f, tile.transform.localScale.z);
 	}
+
+    /*
+    =
+    =
+    =
+    EXPOSE GENERATOR VARIABLES
+    =
+    =
+    =
+    */
+    void SetMinRoomDiameter(){
+        if (GameObject.Find("MinRoomDiameter").GetComponent<Text>().text == "")
+            minRoomDiameter = 3;
+        else
+            minRoomDiameter = int.Parse(GameObject.Find("MinRoomDiameter").GetComponent<Text>().text);
+        if (minRoomDiameter < 3)
+            minRoomDiameter = 3;
+
+    }
+    void SetMaxRoomDiameter(){
+        if (GameObject.Find("MaxRoomDiameter").GetComponent<Text>().text == "")
+            maxRoomDiameter = 20;
+        else
+            maxRoomDiameter = int.Parse(GameObject.Find("MaxRoomDiameter").GetComponent<Text>().text);
+        if (maxRoomDiameter > 20)
+            maxRoomDiameter = 20;
+        if (minRoomDiameter > maxRoomDiameter){
+            minRoomDiameter = 3;
+            maxRoomDiameter = 20;
+        }
+    }
+    void SetShapeFactor(){
+        if (GameObject.Find("ShapeFactor").GetComponent<Text>().text == "")
+            shapeFactor = 1f;
+        else
+            shapeFactor = float.Parse(GameObject.Find("ShapeFactor").GetComponent<Text>().text);
+        if (shapeFactor > 10f)
+            shapeFactor = 10f;
+    }
+    void SetMaxAttempts(){
+        if (GameObject.Find("MaxAttempts").GetComponent<Text>().text == "")
+            maxAttempts = 100;
+        else
+            maxAttempts = int.Parse(GameObject.Find("MaxAttempts").GetComponent<Text>().text);
+    }
+    int SetSize(){
+        int tempsize;
+        if (GameObject.Find("Size").GetComponent<Text>().text == "")
+            tempsize = int.Parse(GameObject.Find("Size").GetComponent<Text>().text);
+        else
+            tempsize = 50;
+        if (tempsize < 50)
+            tempsize = 50;
+        return tempsize;
+    }
+
+    public Map MakeMeAMap(){
+        SetMinRoomDiameter();
+        SetMaxRoomDiameter();
+        SetShapeFactor();
+        SetMaxAttempts();
+        int returnsize = SetSize();
+
+        return GenerateMap(returnsize, returnsize);
+    }
 }

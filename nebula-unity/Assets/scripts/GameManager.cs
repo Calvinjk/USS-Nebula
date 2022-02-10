@@ -18,9 +18,9 @@ public class GameManager : MonoBehaviour {
 	}
 
 	// TODO - Sterilize Input
-	public void GenerateNewMap(int size = 50){
-		if (map != null) { Destroy (map.gameObject); }
+	public void GenerateNewMap(){
+        if (map != null) { Destroy (map.gameObject); }
 
-		map = generatorScript.GenerateMap (size, size);
-	}
+        map = generatorScript.MakeMeAMap ();
+    }
 }
