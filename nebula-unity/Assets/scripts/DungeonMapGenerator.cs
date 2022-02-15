@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // All generated rooms will be an odd number of tiles in at least one dimension to allow for a central door
 public class DungeonMapGenerator : MonoBehaviour {
@@ -108,11 +109,15 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     // This function will generate a map given some bounding dimensions
-    public Map GenerateMap(int xSize = XDIMDEFAULT, int ySize = YDIMDEFAULT) {
+    public Map GenerateMap(int xSize, int ySize, int minDiam, int maxDiam, float sfact, int maxatt) {
         ResetGenerationVariables();
 
         mapSize.x = xSize;
         mapSize.y = ySize;
+        minRoomDiameter = minDiam;
+        maxRoomDiameter = maxDiam;
+        shapeFactor = sfact;
+        maxAttempts = maxatt;
 
         // Create an empty parent object for the map
         map = new GameObject("Map");
@@ -593,4 +598,5 @@ public class DungeonMapGenerator : MonoBehaviour {
 		tile.gameObject.GetComponent<Renderer>().material.color = Color.magenta;
 		tile.transform.localScale = new Vector3(tile.transform.localScale.x, 2.5f, tile.transform.localScale.z);
 	}
+
 }
