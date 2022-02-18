@@ -59,12 +59,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 248ba3d87cc3a644c91a00724f48e174, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  floorTile: {fileID: 1574912612369474, guid: 6b711d1aa5805a543984159f99ad9f63, type: 3}
+  floorTile: {fileID: 919132149155446097, guid: 2e0c0d94c93fc6c47bf8fff0038460fc,
+    type: 3}
+  wallTile: {fileID: 919132149155446097, guid: e82a0deff052c7f46b53dbe93ce58f8d, type: 3}
+  doorTile: {fileID: 919132149155446097, guid: 102069633f343784ba82b3c7e8bb9782, type: 3}
   generationDebugLogs: 1
   minRoomDiameter: 3
   maxRoomDiameter: 20
+  shapeFactor: 1
   maxAttempts: 100
   _____________________: 0
-  mapXSize: 0
-  mapYSize: 0
-  curRoomFailures: 0

@@ -4,31 +4,30 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour {
 
-	public enum TileState {
+	public enum TileType {
 		Door,
-		Obstructed,
-		Open,
+		Floor,
 		Ungenerated,
 		Wall
 	};
 
 	public bool ________________;
 	public Vector2Int location;
-	public TileState curTileState = TileState.Open;
+	public TileType curTileType = TileType.Floor;
 
     //////////////////////// Constructors
     public Tile() {
-        curTileState = TileState.Ungenerated;
+        curTileType = TileType.Ungenerated;
     }
-	public Tile(Vector2Int loc, TileState state = TileState.Open) {
+	public Tile(Vector2Int loc, TileType state = TileType.Floor) {
 		location = loc;
-		curTileState = state;
+		curTileType = state;
 	}
 
     ////////////////////////
 
     public void PrintTile() {
-		Debug.Log("TileState: " + curTileState
+		Debug.Log("TileType: " + curTileType
 			+ ", Location: (" + location.x + ", " + location.y + ")");
 	}
 }
