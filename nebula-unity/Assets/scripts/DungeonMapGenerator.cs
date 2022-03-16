@@ -109,6 +109,7 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     // This function will generate a map given some bounding dimensions
+<<<<<<< Updated upstream
     public Map GenerateMap(int xSize, int ySize, int minDiam, int maxDiam, float sfact, int maxatt) {
         ResetGenerationVariables();
 
@@ -118,6 +119,21 @@ public class DungeonMapGenerator : MonoBehaviour {
         maxRoomDiameter = maxDiam;
         shapeFactor = sfact;
         maxAttempts = maxatt;
+=======
+    public Map GenerateMap(int xSize = -1, int ySize = -1, int minDiam = -1, int maxDiam = -1, float sfact = -1f, int maxatt = -1) {
+
+        ResetGenerationVariables();
+
+        int[] sents = ReplaceSentinels(xSize, ySize, minDiam, maxDiam, maxatt);
+        float sentsfloat = ReplaceSentinelsFloat(sfact);
+
+        xSize = sents[0];
+        ySize = sents[1];
+        minDiam = sents[2];
+        maxDiam = sents[3];
+        sfact = sentsfloat;
+        maxatt = sents[4];
+>>>>>>> Stashed changes
 
         // Create an empty parent object for the map
         map = new GameObject("Map");
@@ -128,8 +144,8 @@ public class DungeonMapGenerator : MonoBehaviour {
         tiles = new Tile[xSize, ySize];
 
         // Create the initial room in the center (ish)
-        int xLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
-        int yLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1);
+        int xLength = Random.Range(minDiam, minDiam + 1) / 2;
+        int yLength = Random.Range(maxDiam, maxDiam + 1);
 
         int xLocation = (xSize / 2) - (xLength / 2);
         int yLocation = (ySize / 2) - (yLength / 2);
@@ -143,7 +159,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         GenerateRoom(xLocation, yLocation, xLength, yLength, Direction.North);
 
         // Keep going!
-        while (curRoomFailures < maxAttempts) {
+        while (curRoomFailures < maxatt) {
             // Randomly decide if we are going to attach a room vertically or horizontally
             Direction direction = Direction.INVALID;  // Placeholder, this will be updated later
             int checkDirection = Random.Range(0, 2);
@@ -167,7 +183,7 @@ public class DungeonMapGenerator : MonoBehaviour {
             //       therefore, we want our allowed choices to be min + 1 to max - 1.  
             //       Random.Range(int, int) is (inclusive, exclusive], so our random function looks like below
             int lineToCheck = Random.Range(sliceChoiceBounds.x + 1, sliceChoiceBounds.y);
-            PotentialDoorsList pDoors = new PotentialDoorsList(shapeFactor);
+            PotentialDoorsList pDoors = new PotentialDoorsList(sfact);
 
             for (int i = sliceEndpoints.x; i <= sliceEndpoints.y; ++i) {
                 Tile curTile = null;
@@ -197,7 +213,7 @@ public class DungeonMapGenerator : MonoBehaviour {
             if (newDoor == null) { continue; }
 
             // The distance variable of a tile here is actually the max depth of the room, so lets use that information in choosing room size to reduce failures
-            int halfRoomWidth = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
+            int halfRoomWidth = Random.Range(minDiam, maxDiam + 1) / 2;
             int roomDepth = Random.Range(minRoomDiameter, Mathf.Min(newDoor.distance, maxRoomDiameter) + 1);
             
             GenerateRoom(newDoor.tile.location.x, newDoor.tile.location.y, halfRoomWidth, roomDepth, newDoor.direction);
@@ -207,6 +223,28 @@ public class DungeonMapGenerator : MonoBehaviour {
         mapScript.tileMap = tiles;
 
         return mapScript;
+    }
+
+    int[] ReplaceSentinels(int xSize, int ySize, int minDiam, int maxDiam, int maxatt){
+        int[] sentsreturn = new int[5];
+        if (xSize == -1)
+            sentsreturn[0] = XDIMDEFAULT;
+        if (ySize == -1)
+            sentsreturn[1] = YDIMDEFAULT;
+        if (minDiam == -1)
+            sentsreturn[2] = minRoomDiameter;
+        if (maxDiam == -1)
+            sentsreturn[3] = maxRoomDiameter;
+        if (maxatt == -1)
+            sentsreturn[4] = maxAttempts;
+        return sentsreturn;
+    }
+
+    float ReplaceSentinelsFloat(float sfact){
+        if (sfact == -1f)
+            return shapeFactor;
+        else
+            return sfact;
     }
 
 	// xLocation, yLocation: 	Coordinates to a door of this room.
