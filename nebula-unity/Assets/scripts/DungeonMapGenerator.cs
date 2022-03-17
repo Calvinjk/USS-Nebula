@@ -109,31 +109,11 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     // This function will generate a map given some bounding dimensions
-<<<<<<< Updated upstream
-    public Map GenerateMap(int xSize, int ySize, int minDiam, int maxDiam, float sfact, int maxatt) {
-        ResetGenerationVariables();
-
-        mapSize.x = xSize;
-        mapSize.y = ySize;
-        minRoomDiameter = minDiam;
-        maxRoomDiameter = maxDiam;
-        shapeFactor = sfact;
-        maxAttempts = maxatt;
-=======
     public Map GenerateMap(int xSize = -1, int ySize = -1, int minDiam = -1, int maxDiam = -1, float sfact = -1f, int maxatt = -1) {
 
         ResetGenerationVariables();
 
-        int[] sents = ReplaceSentinels(xSize, ySize, minDiam, maxDiam, maxatt);
-        float sentsfloat = ReplaceSentinelsFloat(sfact);
-
-        xSize = sents[0];
-        ySize = sents[1];
-        minDiam = sents[2];
-        maxDiam = sents[3];
-        sfact = sentsfloat;
-        maxatt = sents[4];
->>>>>>> Stashed changes
+        ReplaceSentinels(ref xSize, ref ySize, ref minDiam, ref maxDiam, ref sfact, ref maxatt);
 
         // Create an empty parent object for the map
         map = new GameObject("Map");
@@ -225,26 +205,19 @@ public class DungeonMapGenerator : MonoBehaviour {
         return mapScript;
     }
 
-    int[] ReplaceSentinels(int xSize, int ySize, int minDiam, int maxDiam, int maxatt){
-        int[] sentsreturn = new int[5];
+    void ReplaceSentinels(ref int xSize, ref int ySize, ref int minDiam, ref int maxDiam, ref float sfact, ref int maxatt){
         if (xSize == -1)
-            sentsreturn[0] = XDIMDEFAULT;
+            xSize = XDIMDEFAULT;
         if (ySize == -1)
-            sentsreturn[1] = YDIMDEFAULT;
+            ySize = YDIMDEFAULT;
         if (minDiam == -1)
-            sentsreturn[2] = minRoomDiameter;
+            minDiam = minRoomDiameter;
         if (maxDiam == -1)
-            sentsreturn[3] = maxRoomDiameter;
-        if (maxatt == -1)
-            sentsreturn[4] = maxAttempts;
-        return sentsreturn;
-    }
-
-    float ReplaceSentinelsFloat(float sfact){
+            maxDiam = maxRoomDiameter;
         if (sfact == -1f)
-            return shapeFactor;
-        else
-            return sfact;
+            sfact = shapeFactor;
+        if (maxatt == -1)
+            maxatt = maxAttempts;
     }
 
 	// xLocation, yLocation: 	Coordinates to a door of this room.
