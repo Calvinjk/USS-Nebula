@@ -120,6 +120,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         map.transform.position = new Vector3(0f, 0f, 0f);
         Map mapScript = map.AddComponent<Map>();
         mapScript.SetMapSize(xSize, ySize);
+        mapSize = new Vector2Int(xSize, ySize);
 
         tiles = new Tile[xSize, ySize];
 
