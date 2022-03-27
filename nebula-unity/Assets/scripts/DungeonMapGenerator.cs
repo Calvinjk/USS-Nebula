@@ -109,11 +109,11 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     // This function will generate a map given some bounding dimensions
-    public Map GenerateMap(int xSize = -1, int ySize = -1, int minDiam = -1, int maxDiam = -1, float sfact = -1f, int maxatt = -1) {
+    public Map GenerateMap(int xSize = -1, int ySize = -1, int minDiam = -1, int maxDiam = -1, float sfact = -1f, int maxatmp = -1) {
 
         ResetGenerationVariables();
 
-        ReplaceSentinels(ref xSize, ref ySize, ref minDiam, ref maxDiam, ref sfact, ref maxatt);
+        ReplaceSentinels(ref xSize, ref ySize, ref minDiam, ref maxDiam, ref sfact, ref maxatmp);
 
         // Create an empty parent object for the map
         map = new GameObject("Map");
@@ -140,7 +140,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         GenerateRoom(xLocation, yLocation, xLength, yLength, Direction.North);
 
         // Keep going!
-        while (curRoomFailures < maxatt) {
+        while (curRoomFailures < maxatmp) {
             // Randomly decide if we are going to attach a room vertically or horizontally
             Direction direction = Direction.INVALID;  // Placeholder, this will be updated later
             int checkDirection = Random.Range(0, 2);
@@ -206,7 +206,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         return mapScript;
     }
 
-    void ReplaceSentinels(ref int xSize, ref int ySize, ref int minDiam, ref int maxDiam, ref float sfact, ref int maxatt){
+    void ReplaceSentinels(ref int xSize, ref int ySize, ref int minDiam, ref int maxDiam, ref float sfact, ref int maxatmp){
         if (xSize == -1)
             xSize = XDIMDEFAULT;
         if (ySize == -1)
@@ -217,8 +217,8 @@ public class DungeonMapGenerator : MonoBehaviour {
             maxDiam = maxRoomDiameter;
         if (sfact == -1f)
             sfact = shapeFactor;
-        if (maxatt == -1)
-            maxatt = maxAttempts;
+        if (maxatmp == -11)
+            maxatmp = maxAttempts;
     }
 
 	// xLocation, yLocation: 	Coordinates to a door of this room.

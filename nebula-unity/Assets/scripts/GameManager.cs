@@ -50,8 +50,9 @@ public class GameManager : MonoBehaviour {
         if (maxRoomDiameter > 20)
             maxRoomDiameter = 20;
         if (minRoomDiameter > maxRoomDiameter){
-            minRoomDiameter = 3;
-            maxRoomDiameter = 20;
+            int temp = minRoomDiameter;
+            minRoomDiameter = maxRoomDiameter;
+            maxRoomDiameter = temp;
         }
 
 		int[] range = {minRoomDiameter, maxRoomDiameter};
@@ -92,6 +93,6 @@ public class GameManager : MonoBehaviour {
         int maxattempts = SetMaxAttempts();
         int returnsize = SetSize();
 
-        return generatorScript.GenerateMap(xSize: SetSize(), ySize: SetSize(), maxDiam: SetRoomDiameterRange()[1], minDiam: SetRoomDiameterRange()[0], sfact: SetShapeFactor(), maxatt: SetMaxAttempts());
+        return generatorScript.GenerateMap(xSize: SetSize(), ySize: SetSize(), maxDiam: SetRoomDiameterRange()[1], minDiam: SetRoomDiameterRange()[0], sfact: SetShapeFactor(), maxatmp: SetMaxAttempts());
     }
 }
