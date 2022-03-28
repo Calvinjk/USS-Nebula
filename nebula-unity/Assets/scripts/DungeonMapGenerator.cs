@@ -109,11 +109,11 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     // This function will generate a map given some bounding dimensions
-    public Map GenerateMap(int xSize = -1, int ySize = -1, int minDiam = -1, int maxDiam = -1, float sfact = -1f, int maxatmp = -1) {
+    public Map GenerateMap(int xSize = -1, int ySize = -1, int minDiam = -1, int maxDiam = -1, float sFact = -1f, int maxAtmp = -1) {
 
         ResetGenerationVariables();
 
-        ReplaceSentinels(ref xSize, ref ySize, ref minDiam, ref maxDiam, ref sfact, ref maxatmp);
+        ReplaceSentinels(ref xSize, ref ySize, ref minDiam, ref maxDiam, ref sFact, ref maxAtmp);
 
         // Create an empty parent object for the map
         map = new GameObject("Map");
@@ -140,7 +140,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         GenerateRoom(xLocation, yLocation, xLength, yLength, Direction.North);
 
         // Keep going!
-        while (curRoomFailures < maxatmp) {
+        while (curRoomFailures < maxAtmp) {
             // Randomly decide if we are going to attach a room vertically or horizontally
             Direction direction = Direction.INVALID;  // Placeholder, this will be updated later
             int checkDirection = Random.Range(0, 2);
@@ -164,7 +164,7 @@ public class DungeonMapGenerator : MonoBehaviour {
             //       therefore, we want our allowed choices to be min + 1 to max - 1.  
             //       Random.Range(int, int) is (inclusive, exclusive], so our random function looks like below
             int lineToCheck = Random.Range(sliceChoiceBounds.x + 1, sliceChoiceBounds.y);
-            PotentialDoorsList pDoors = new PotentialDoorsList(sfact);
+            PotentialDoorsList pDoors = new PotentialDoorsList(sFact);
 
             for (int i = sliceEndpoints.x; i <= sliceEndpoints.y; ++i) {
                 Tile curTile = null;
@@ -206,7 +206,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         return mapScript;
     }
 
-    void ReplaceSentinels(ref int xSize, ref int ySize, ref int minDiam, ref int maxDiam, ref float sfact, ref int maxatmp){
+    void ReplaceSentinels(ref int xSize, ref int ySize, ref int minDiam, ref int maxDiam, ref float sFact, ref int maxAtmp){
         if (xSize == -1)
             xSize = XDIMDEFAULT;
         if (ySize == -1)
@@ -215,10 +215,10 @@ public class DungeonMapGenerator : MonoBehaviour {
             minDiam = minRoomDiameter;
         if (maxDiam == -1)
             maxDiam = maxRoomDiameter;
-        if (sfact == -1f)
-            sfact = shapeFactor;
-        if (maxatmp == -11)
-            maxatmp = maxAttempts;
+        if (sFact == -1f)
+            sFact = shapeFactor;
+        if (maxAtmp == -11)
+            maxAtmp = maxAttempts;
     }
 
 	// xLocation, yLocation: 	Coordinates to a door of this room.

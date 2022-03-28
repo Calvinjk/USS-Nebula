@@ -93,6 +93,6 @@ public class GameManager : MonoBehaviour {
         int maxattempts = SetMaxAttempts();
         int returnsize = SetSize();
 
-        return generatorScript.GenerateMap(xSize: SetSize(), ySize: SetSize(), maxDiam: SetRoomDiameterRange()[1], minDiam: SetRoomDiameterRange()[0], sfact: SetShapeFactor(), maxatmp: SetMaxAttempts());
+        return generatorScript.GenerateMap(xSize: SetSize(), ySize: SetSize(), maxDiam: SetRoomDiameterRange()[1], minDiam: SetRoomDiameterRange()[0], sFact: SetShapeFactor(), maxAtmp: SetMaxAttempts());
     }
 }
