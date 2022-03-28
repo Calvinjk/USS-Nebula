@@ -36,19 +36,21 @@ public class GameManager : MonoBehaviour {
     =
     */
     int[] GetRoomDiameterRange(){
+        Text mintxt = GameObject.Find("MinRoomDiameter").GetComponent<Text>();
+        Text maxtxt = GameObject.Find("MaxRoomDiameter").GetComponent<Text>();
 		int minRoomDiameter = 1;
-        if (GameObject.Find("MinRoomDiameter").GetComponent<Text>().text == "")
+        if (mintxt.text == "")
             minRoomDiameter = -1;
         else
-            minRoomDiameter = int.Parse(GameObject.Find("MinRoomDiameter").GetComponent<Text>().text);
+            minRoomDiameter = int.Parse(mintxt.text);
         if (minRoomDiameter < MIN_ALLOWED_ROOM_DIAM)
             minRoomDiameter = MIN_ALLOWED_ROOM_DIAM;
 
 		int maxRoomDiameter;
-        if (GameObject.Find("MaxRoomDiameter").GetComponent<Text>().text == "")
+        if (maxtxt.text == "")
             maxRoomDiameter = -1;
         else
-            maxRoomDiameter = int.Parse(GameObject.Find("MaxRoomDiameter").GetComponent<Text>().text);
+            maxRoomDiameter = int.Parse(maxtxt.text);
         if (minRoomDiameter > maxRoomDiameter){
             int temp = minRoomDiameter;
             minRoomDiameter = maxRoomDiameter;
@@ -59,11 +61,12 @@ public class GameManager : MonoBehaviour {
 		return range;
     }
     float GetShapeFactor(){
+        Text sftxt = GameObject.Find("ShapeFactor").GetComponent<Text>();
 		float shapeFactor;
-        if (GameObject.Find("ShapeFactor").GetComponent<Text>().text == "")
+        if (sftxt.text == "")
             shapeFactor = -11f;
         else
-            shapeFactor = float.Parse(GameObject.Find("ShapeFactor").GetComponent<Text>().text);
+            shapeFactor = float.Parse(sftxt.text);
         if (shapeFactor > 10f)
             shapeFactor = 10f;
         if (shapeFactor < -10f)
@@ -71,11 +74,12 @@ public class GameManager : MonoBehaviour {
 		return shapeFactor;
     }
     int GetMaxAttempts(){
+        Text atttxt = GameObject.Find("MaxAttempts").GetComponent<Text>();
 		int maxAttempts;
-        if (GameObject.Find("MaxAttempts").GetComponent<Text>().text == "")
+        if (atttxt.text == "")
             maxAttempts = -1;
         else
-            maxAttempts = int.Parse(GameObject.Find("MaxAttempts").GetComponent<Text>().text);
+            maxAttempts = int.Parse(atttxt.text);
 		if (maxAttempts < 1)
             maxAttempts = 1;
         return maxAttempts;
@@ -83,21 +87,23 @@ public class GameManager : MonoBehaviour {
 
     int GetXSize(){
         int tempsize;
-        if (GameObject.Find("XSize").GetComponent<Text>().text == "")
+        Text xtext = GameObject.Find("XSize").GetComponent<Text>();
+        if (xtext.text == "")
             tempsize = -1;
         else
-            tempsize = int.Parse(GameObject.Find("Size").GetComponent<Text>().text);
+            tempsize = int.Parse(xtext.text);
         if (tempsize < MIN_ALLOWED_SIZE)
             tempsize = MIN_ALLOWED_SIZE;
         return tempsize;
     }
 
     int GetYSize(){
+        Text ytext = GameObject.Find("YSize").GetComponent<Text>();
         int tempsize;
-        if (GameObject.Find("YSize").GetComponent<Text>().text == "")
+        if (ytext.text == "")
             tempsize = -1;
         else
-            tempsize = int.Parse(GameObject.Find("Size").GetComponent<Text>().text);
+            tempsize = int.Parse(ytext.text);
         if (tempsize < MIN_ALLOWED_SIZE)
             tempsize = MIN_ALLOWED_SIZE;
         return tempsize;
