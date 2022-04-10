@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // All generated rooms will be an odd number of tiles in at least one dimension to allow for a central door
 public class DungeonMapGenerator : MonoBehaviour {
@@ -110,23 +111,24 @@ public class DungeonMapGenerator : MonoBehaviour {
     }
 
     // This function will generate a map given some bounding dimensions
-    public Map GenerateMap(int xSize = XDIMDEFAULT, int ySize = YDIMDEFAULT) {
+    public Map GenerateMap(int xSize = -1, int ySize = -1, int minDiam = -1, int maxDiam = -1, float sFact = -1f, int maxAtmp = -1) {
+
         ResetGenerationVariables();
 
-        mapSize.x = xSize;
-        mapSize.y = ySize;
+        ReplaceSentinels(ref xSize, ref ySize, ref minDiam, ref maxDiam, ref sFact, ref maxAtmp);
 
         // Create an empty parent object for the map
         map = new GameObject("Map");
         map.transform.position = new Vector3(0f, 0f, 0f);
         Map mapScript = map.AddComponent<Map>();
         mapScript.SetMapSize(xSize, ySize);
+        mapSize = new Vector2Int(xSize, ySize);
 
         tiles = new Tile[xSize, ySize];
 
         // Create the initial room in the center (ish)
-        int xLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
-        int yLength = Random.Range(minRoomDiameter, maxRoomDiameter + 1);
+        int xLength = Random.Range(minDiam, minDiam + 1) / 2;
+        int yLength = Random.Range(maxDiam, maxDiam + 1);
 
         int xLocation = (xSize / 2) - (xLength / 2);
         int yLocation = (ySize / 2) - (yLength / 2);
@@ -140,7 +142,7 @@ public class DungeonMapGenerator : MonoBehaviour {
         GenerateRoom(xLocation, yLocation, xLength, yLength, Direction.North);
 
         // Keep going!
-        while (curRoomFailures < maxAttempts) {
+        while (curRoomFailures < maxAtmp) {
             // Randomly decide if we are going to attach a room vertically or horizontally
             Direction direction = Direction.INVALID;  // Placeholder, this will be updated later
             int checkDirection = Random.Range(0, 2);
@@ -164,7 +166,7 @@ public class DungeonMapGenerator : MonoBehaviour {
             //       therefore, we want our allowed choices to be min + 1 to max - 1.  
             //       Random.Range(int, int) is (inclusive, exclusive], so our random function looks like below
             int lineToCheck = Random.Range(sliceChoiceBounds.x + 1, sliceChoiceBounds.y);
-            PotentialDoorsList pDoors = new PotentialDoorsList(shapeFactor);
+            PotentialDoorsList pDoors = new PotentialDoorsList(sFact);
 
             for (int i = sliceEndpoints.x; i <= sliceEndpoints.y; ++i) {
                 Tile curTile = null;
@@ -194,7 +196,7 @@ public class DungeonMapGenerator : MonoBehaviour {
             if (newDoor == null) { continue; }
 
             // The distance variable of a tile here is actually the max depth of the room, so lets use that information in choosing room size to reduce failures
-            int halfRoomWidth = Random.Range(minRoomDiameter, maxRoomDiameter + 1) / 2;
+            int halfRoomWidth = Random.Range(minDiam, maxDiam + 1) / 2;
             int roomDepth = Random.Range(minRoomDiameter, Mathf.Min(newDoor.distance, maxRoomDiameter) + 1);
             
             GenerateRoom(newDoor.tile.location.x, newDoor.tile.location.y, halfRoomWidth, roomDepth, newDoor.direction);
@@ -204,6 +206,21 @@ public class DungeonMapGenerator : MonoBehaviour {
         mapScript.tileMap = tiles;
 
         return mapScript;
+    }
+
+    void ReplaceSentinels(ref int xSize, ref int ySize, ref int minDiam, ref int maxDiam, ref float sFact, ref int maxAtmp){
+        if (xSize == -1)
+            xSize = XDIMDEFAULT;
+        if (ySize == -1)
+            ySize = YDIMDEFAULT;
+        if (minDiam == -1)
+            minDiam = minRoomDiameter;
+        if (maxDiam == -1)
+            maxDiam = maxRoomDiameter;
+        if (sFact == -1f)
+            sFact = shapeFactor;
+        if (maxAtmp == -11)
+            maxAtmp = maxAttempts;
     }
 
 	// xLocation, yLocation: 	Coordinates to a door of this room.
@@ -610,4 +627,5 @@ public class DungeonMapGenerator : MonoBehaviour {
         newTile.curTileType = Tile.TileType.Door;
         Destroy(oldTile);
 	}
+
 }
