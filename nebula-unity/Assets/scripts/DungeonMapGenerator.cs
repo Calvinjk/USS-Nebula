@@ -314,6 +314,9 @@ public class DungeonMapGenerator : MonoBehaviour {
 		*/
 		for (int i = -xLength; i <= xLength; ++i) {
 			for (int j = 0; j < yLength; ++j) {
+                // Break out if not on an edge
+                if ((i != -xLength || i != xLength) && (j != 0 || j != yLength - 1)) { continue; }
+
 				Tile curTile = null;
 
 				switch (direction) {
